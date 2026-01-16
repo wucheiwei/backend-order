@@ -14,6 +14,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// 測試 API 連通性
+Route::get('/test', function (Request $request) {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'API 連通測試成功',
+        'timestamp' => now()->toDateTimeString(),
+        'method' => $request->method(),
+        'url' => $request->fullUrl(),
+    ]);
+});
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
