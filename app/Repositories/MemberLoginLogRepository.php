@@ -14,33 +14,34 @@ class MemberLoginLogRepository
     }
 
     /**
-     * 創建登入記錄
+     * 創建或更新登入記錄
+     * 如果該 user_id 沒有記錄，就創建新的記錄
+     * 如果該 user_id 已經存在，就更新現有記錄
      *
      * @param int $userId
      * @return MemberLoginLog
      */
-    public function createLoginLog(int $userId): MemberLoginLog
+    public function createOrUpdateLoginLog(int $userId): MemberLoginLog
     {
-        return $this->model->create([
-            'user_id' => $userId,
-            'login_time' => now(),
-            'logout_time' => null,
-        ]);
+        return $this->model->updateOrCreate(
+            ['user_id' => $userId],
+            [
+                'login_time' => now(),
+                'logout_time' => null,
+            ]
+        );
     }
 
     /**
      * 更新登出時間
+     * 更新該 user_id 的記錄的 logout_time
      *
      * @param int $userId
      * @return bool
      */
     public function updateLogoutTime(int $userId): bool
     {
-        $loginLog = $this->model
-            ->where('user_id', $userId)
-            ->whereNull('logout_time')
-            ->latest('login_time')
-            ->first();
+        $loginLog = $this->model->where('user_id', $userId)->first();
 
         if ($loginLog) {
             return $loginLog->update([

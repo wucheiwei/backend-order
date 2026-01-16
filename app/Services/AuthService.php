@@ -79,8 +79,8 @@ class AuthService
         // 生成 JWT Token
         $token = JWTAuth::fromUser($user);
 
-        // 記錄登入時間
-        $this->loginLogRepository->createLoginLog($user->id);
+        // 記錄登入時間（如果該 user_id 沒有記錄就創建，有記錄就更新）
+        $this->loginLogRepository->createOrUpdateLoginLog($user->id);
 
         return [
             'user' => [

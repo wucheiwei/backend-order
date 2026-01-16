@@ -13,11 +13,10 @@ return new class extends Migration
     {
         Schema::create('member_login_logs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->unique();
             $table->datetime('login_time')->comment('登入時間 yyyy-mm-dd H:i:s');
             $table->datetime('logout_time')->nullable()->comment('登出時間 yyyy-mm-dd H:i:s');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->index('user_id');
         });
     }
 
