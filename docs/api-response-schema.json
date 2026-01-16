@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "API Response Schema",
+  "description": "統一的 API 回應格式規格",
+  "type": "object",
+  "required": ["code", "is_success", "message", "data"],
+  "properties": {
+    "code": {
+      "type": "integer",
+      "description": "HTTP 狀態碼或自定義錯誤碼",
+      "enum": [200, 400, 401, 403, 404, 422, 500],
+      "examples": [200, 404, 500]
+    },
+    "is_success": {
+      "type": "boolean",
+      "description": "操作是否成功",
+      "examples": [true, false]
+    },
+    "message": {
+      "type": "string",
+      "description": "回應訊息，用於描述操作結果或錯誤原因",
+      "examples": ["操作成功", "資源不存在", "驗證失敗"]
+    },
+    "data": {
+      "description": "回應資料，可以是陣列、物件或 null",
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {}
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "examples": [
+        [],
+        {},
+        null,
+        {"id": 1, "name": "範例"},
+        [{"id": 1}, {"id": 2}]
+      ]
+    }
+  },
+  "examples": [
+    {
+      "code": 200,
+      "is_success": true,
+      "message": "操作成功",
+      "data": {"id": 1, "name": "範例資料"}
+    },
+    {
+      "code": 404,
+      "is_success": false,
+      "message": "資源不存在",
+      "data": []
+    },
+    {
+      "code": 422,
+      "is_success": false,
+      "message": "驗證失敗",
+      "data": {
+        "errors": {
+          "email": ["電子郵件格式不正確"]
+        }
+      }
+    }
+  ]
+}
+
