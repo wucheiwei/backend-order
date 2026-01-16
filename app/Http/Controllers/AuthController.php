@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Traits\ApiResponse;
+use App\Models\MemberLoginLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -81,6 +82,12 @@ class AuthController extends Controller
             // 生成 JWT Token
             $token = JWTAuth::fromUser($user);
 
+            // 記錄登入時間
+            MemberLoginLog::create([
+                'user_id' => $user->id,
+                'login_time' => now(),
+            ]);
+
             return $this->success([
                 'user' => [
                     'id' => $user->id,
@@ -123,6 +130,22 @@ class AuthController extends Controller
     public function logout()
     {
         try {
+            $user = auth()->user();
+
+            if ($user) {
+                // 更新該用戶最近一筆沒有登出時間的記錄
+                $loginLog = MemberLoginLog::where('user_id', $user->id)
+                    ->whereNull('logout_time')
+                    ->latest('login_time')
+                    ->first();
+
+                if ($loginLog) {
+                    $loginLog->update([
+                        'logout_time' => now(),
+                    ]);
+                }
+            }
+
             JWTAuth::invalidate(JWTAuth::getToken());
 
             return $this->success([], '登出成功');
