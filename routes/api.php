@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,17 +15,35 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// 測試 API 連通性
+// 測試 API 連通性（不需要認證）
 Route::get('/test', function (Request $request) {
     return response()->json([
-        'status' => 'success',
+        'code' => 200,
+        'is_success' => true,
         'message' => 'API 連通測試成功',
-        'timestamp' => now()->toDateTimeString(),
-        'method' => $request->method(),
-        'url' => $request->fullUrl(),
+        'data' => [
+            'timestamp' => now()->toDateTimeString(),
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
+        ],
     ]);
 });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// 會員認證相關路由（不需要認證）
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']); // 註冊
+    Route::post('/login', [AuthController::class, 'login']); // 登入
+});
+
+// 需要 JWT 認證的路由
+Route::middleware('jwt.auth')->group(function () {
+    // 會員相關路由
+    Route::prefix('auth')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']); // 取得當前會員資訊
+        Route::post('/logout', [AuthController::class, 'logout']); // 登出
+        Route::post('/refresh', [AuthController::class, 'refresh']); // 刷新 Token
+    });
+
+    // 其他需要認證的 API 路由放在這裡
+    // Route::get('/protected', [YourController::class, 'method']);
 });
