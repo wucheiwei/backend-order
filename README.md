@@ -59,15 +59,17 @@ backend-order/
 
 2. **設定環境變數**
    
-   編輯 `.env` 檔案，設定以下資料庫連線資訊：
+   編輯 `.env` 檔案，**必須設定以下資料庫連線資訊**（這是 Laravel 應用連接到 MySQL 容器的必要設定）：
    ```env
    DB_CONNECTION=mysql
-   DB_HOST=mysql
-   DB_PORT=3306
+   DB_HOST=mysql          # 使用 Docker 服務名稱（不是 127.0.0.1）
+   DB_PORT=3306          # MySQL 容器內部端口
    DB_DATABASE=backend-order
    DB_USERNAME=root
    DB_PASSWORD=root
    ```
+   
+   > **重要**：`DB_HOST=mysql` 必須使用 Docker Compose 中定義的 MySQL 服務名稱 `mysql`，這樣 Laravel 應用容器才能通過 Docker 內部網路連接到 MySQL 容器。如果使用 `127.0.0.1` 或 `localhost`，應用將無法連接到資料庫。
 
 3. **啟動 Docker 容器**
    ```bash
@@ -112,6 +114,27 @@ backend-order/
   - 資料庫名稱: `backend-order`
   - 使用者名稱: `root`
   - 密碼: `root`
+
+#### MySQL Workbench 連線設定（可選）
+
+如果你想使用 MySQL Workbench 等 GUI 工具連接到資料庫，可以建立新的連線設定：
+
+1. **開啟 MySQL Workbench**
+2. **點擊「+」新增連線**
+3. **設定連線資訊**：
+   - **Connection Name**: `localtest`（或自訂名稱）
+   - **Hostname**: `127.0.0.1`
+   - **Port**: `3308` ⚠️ **注意：是 3308，不是 3306**
+   - **Username**: `root`
+   - **Password**: `root`
+   - **Default Schema**: `backend-order`（可選）
+
+4. **測試連線**後點擊「OK」儲存
+
+> **說明**：
+> - 這個連線設定是**可選的**，只是方便用 GUI 工具管理資料庫
+> - Laravel 應用在 Docker 內部連接時，使用 `DB_HOST=mysql` 和 `DB_PORT=3306`（容器內部端口）
+> - MySQL Workbench 從主機連接時，使用 `127.0.0.1:3308`（主機映射端口）
 
 #### 常用 Docker 指令
 
