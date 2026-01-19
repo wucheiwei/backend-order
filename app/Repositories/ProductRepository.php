@@ -22,9 +22,16 @@ class ProductRepository
      */
     public function getAll(int $perPage = 10): LengthAwarePaginator
     {
+        // 需求：先依 Store.sort 排序，同一個 Store 底下再依 Product.sort 排序
+        // 透過 join 才能以關聯表欄位排序；同時排除已軟刪除的 Store
         return $this->model
+            ->join('stores', 'stores.id', '=', 'products.store_id')
+            ->whereNull('stores.deleted_at')
+            ->select('products.*')
             ->with('store')
-            ->orderBy('id', 'asc')
+            ->orderBy('stores.sort', 'asc')
+            ->orderBy('products.sort', 'asc')
+            ->orderBy('products.id', 'asc')
             ->paginate($perPage);
     }
 
