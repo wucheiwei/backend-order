@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\StoreController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +45,12 @@ Route::middleware('jwt.auth')->group(function () {
         Route::post('/refresh', [AuthController::class, 'refresh']); // 刷新 Token
     });
 
-    // 其他需要認證的 API 路由放在這裡
-    // Route::get('/protected', [YourController::class, 'method']);
+    // Store 相關路由
+    Route::prefix('stores')->group(function () {
+        Route::get('/', [StoreController::class, 'index']); // 取得所有類別（分頁）
+        Route::get('/{id}', [StoreController::class, 'show']); // 取得單一類別
+        Route::post('/', [StoreController::class, 'store']); // 批量創建類別
+        Route::put('/', [StoreController::class, 'update']); // 批量更新類別
+        Route::delete('/{id}', [StoreController::class, 'destroy']); // 刪除類別（軟刪除）
+    });
 });
