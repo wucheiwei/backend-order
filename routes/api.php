@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -52,5 +53,14 @@ Route::middleware('jwt.auth')->group(function () {
         Route::post('/', [StoreController::class, 'store']); // 批量創建類別
         Route::put('/', [StoreController::class, 'update']); // 批量更新類別
         Route::delete('/{id}', [StoreController::class, 'destroy']); // 刪除類別（軟刪除）
+    });
+
+    // Product 相關路由
+    Route::prefix('products')->group(function () {
+        Route::get('/', [ProductController::class, 'index']); // 取得所有品項（分頁，包含關聯的 Store）
+        Route::get('/{id}', [ProductController::class, 'show']); // 取得單一品項（包含關聯的 Store）
+        Route::post('/', [ProductController::class, 'store']); // 批量創建品項
+        Route::put('/', [ProductController::class, 'update']); // 批量更新品項
+        Route::delete('/{id}', [ProductController::class, 'destroy']); // 刪除品項（軟刪除）
     });
 });
