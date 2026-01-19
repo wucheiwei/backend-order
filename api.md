@@ -359,11 +359,18 @@ Authorization: Bearer {your_jwt_token}
 
 #### Products - 批量更新（PUT /api/products）
 
+**說明（重要）**：
+- 後端會先把傳入的 `products` 依 `store_id` 分組，**一批一批**處理
+- 若單筆資料 **有 `id`**：視為更新該 product
+- 若單筆資料 **沒有 `id`**：視為新增 product（此時 `store_id` / `name` / `price` 為必填）
+  - `sort` **不需傳入**，後端會依「相同 store_id、且排除軟刪除」的最大 sort + 1 自動遞增
+
 ```json
 {
   "products": [
     { "id": 1, "name": "可樂（大）", "price": 60 },
-    { "id": 2, "store_id": 2, "name": "薯條", "price": 40 }
+    { "id": 2, "store_id": 2, "name": "薯條", "price": 40 },
+    { "store_id": 2, "name": "雞塊", "price": 55 }
   ]
 }
 ```
