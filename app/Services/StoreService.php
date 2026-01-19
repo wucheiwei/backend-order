@@ -65,6 +65,10 @@ class StoreService
         $maxSort = $this->storeRepository->getMaxSort();
 
         foreach ($storesData as $data) {
+            // 先取出 products（如果有的話），因為 create 不需要這個欄位
+            $products = $data['products'] ?? [];
+            unset($data['products']);
+
             // 如果沒有傳入 sort，則設定為當前最大值 + 1
             if (!isset($data['sort'])) {
                 $maxSort++;
@@ -74,15 +78,58 @@ class StoreService
                 $maxSort = max($maxSort, $data['sort']);
             }
 
+            // 先建立 store
             $store = $this->storeRepository->create($data);
 
-            $results[] = [
+            // 準備回傳的 store 資料
+            $storeResult = [
                 'id' => $store->id,
                 'name' => $store->name,
                 'sort' => $store->sort,
                 'created_at' => $store->created_at,
                 'updated_at' => $store->updated_at,
             ];
+
+            // 如果有 products，則一併新增（必須在 store 建立後才能取得 store_id）
+            if (!empty($products)) {
+                $maxSortByStore = $this->productRepository->getMaxSortByStoreId($store->id);
+                $productsResult = [];
+                
+                foreach ($products as $productData) {
+                    $maxSortByStore++;
+                    $productData['store_id'] = $store->id; // 設定 store_id
+                    $productData['sort'] = $maxSortByStore; // 自動設定 sort
+                    
+                    $product = $this->productRepository->create($productData);
+                    $product->load('store');
+                    $storeRelation = $product->store;
+                    
+                    // 將新增的 product 資料加入到回傳結果中
+                    $productsResult[] = [
+                        'store' => $storeRelation ? [
+                            'id' => $storeRelation->id,
+                            'name' => $storeRelation->name,
+                            'sort' => $storeRelation->sort,
+                            'created_at' => $storeRelation->created_at,
+                            'updated_at' => $storeRelation->updated_at,
+                        ] : null,
+                        'product' => [
+                            'id' => $product->id,
+                            'store_id' => $product->store_id,
+                            'name' => $product->name,
+                            'price' => $product->price,
+                            'sort' => $product->sort,
+                            'created_at' => $product->created_at,
+                            'updated_at' => $product->updated_at,
+                        ],
+                    ];
+                }
+                
+                // 將 products 加入到 store 的回傳資料中
+                $storeResult['products'] = $productsResult;
+            }
+
+            $results[] = $storeResult;
         }
 
         return $results;

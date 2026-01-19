@@ -177,14 +177,119 @@ Authorization: Bearer {your_jwt_token}
 
 #### POST /api/stores - 批量新增類別
 
-#### Stores - 批量新增（POST /api/stores）
+**請求方式**: `POST`  
+**認證**: 需要 JWT Token  
+**說明**:
+- 可以選擇性地在每個 store 中包含 `products` 陣列，一併新增品項
+- 如果包含 `products`，會先建立 store（取得 `store_id`），然後再新增 products
+- `products` 中的 `sort` **不需傳入**，後端會依「相同 store_id、且排除軟刪除」的最大 sort + 1 自動遞增
 
+**請求範例（不含 products）**:
 ```json
 {
   "stores": [
     { "name": "飲料類" },
     { "name": "餐點類" },
     { "name": "甜點類" }
+  ]
+}
+```
+
+**請求範例（包含 products）**:
+```json
+{
+  "stores": [
+    {
+      "name": "飲料類",
+      "products": [
+        { "name": "可樂", "price": 50 },
+        { "name": "雪碧", "price": 50 }
+      ]
+    },
+    {
+      "name": "餐點類",
+      "products": [
+        { "name": "漢堡", "price": 100 },
+        { "name": "薯條", "price": 40 }
+      ]
+    },
+    {
+      "name": "甜點類"
+    }
+  ]
+}
+```
+
+**回應範例（不含 products）**:
+```json
+{
+  "code": 201,
+  "is_success": true,
+  "message": "創建類別成功",
+  "data": [
+    {
+      "id": 1,
+      "name": "飲料類",
+      "sort": 1,
+      "created_at": "2026-01-18T23:36:10.000000Z",
+      "updated_at": "2026-01-18T23:36:10.000000Z"
+    }
+  ]
+}
+```
+
+**回應範例（包含 products）**:
+```json
+{
+  "code": 201,
+  "is_success": true,
+  "message": "創建類別成功",
+  "data": [
+    {
+      "id": 1,
+      "name": "飲料類",
+      "sort": 1,
+      "created_at": "2026-01-18T23:36:10.000000Z",
+      "updated_at": "2026-01-18T23:36:10.000000Z",
+      "products": [
+        {
+          "store": {
+            "id": 1,
+            "name": "飲料類",
+            "sort": 1,
+            "created_at": "2026-01-18T23:36:10.000000Z",
+            "updated_at": "2026-01-18T23:36:10.000000Z"
+          },
+          "product": {
+            "id": 1,
+            "store_id": 1,
+            "name": "可樂",
+            "price": 50,
+            "sort": 1,
+            "created_at": "2026-01-18T23:36:10.000000Z",
+            "updated_at": "2026-01-18T23:36:10.000000Z"
+          }
+        },
+        {
+          "store": {
+            "id": 1,
+            "name": "飲料類",
+            "sort": 1,
+            "created_at": "2026-01-18T23:36:10.000000Z",
+            "updated_at": "2026-01-18T23:36:10.000000Z"
+          },
+          "product": {
+            "id": 2,
+            "store_id": 1,
+            "name": "雪碧",
+            "price": 50,
+            "sort": 2,
+            "created_at": "2026-01-18T23:36:10.000000Z",
+            "updated_at": "2026-01-18T23:36:10.000000Z"
+          }
+        }
+      ]
+    }
   ]
 }
 ```
