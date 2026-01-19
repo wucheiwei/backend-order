@@ -60,13 +60,11 @@ Content-Type: application/json
 
 **請求方式**: `GET`  
 **認證**: 需要 JWT Token  
-**Query 參數**:
-- `page` (可選): 頁碼，預設為 1
-- `per_page` (可選): 每頁筆數，預設為 10，最多 10 筆
+**說明**: 不分頁，直接回傳所有類別資料，依 `sort` 排序
 
 **請求範例**:
 ```
-GET /api/stores?page=1&per_page=10
+GET /api/stores
 Authorization: Bearer {your_jwt_token}
 ```
 
@@ -91,14 +89,15 @@ Authorization: Bearer {your_jwt_token}
         "sort": 2,
         "created_at": "2026-01-18T23:36:10.000000Z",
         "updated_at": "2026-01-18T23:36:10.000000Z"
+      },
+      {
+        "id": 3,
+        "name": "甜點類",
+        "sort": 3,
+        "created_at": "2026-01-18T23:36:10.000000Z",
+        "updated_at": "2026-01-18T23:36:10.000000Z"
       }
-    ],
-    "pagination": {
-      "current_page": 1,
-      "per_page": 10,
-      "total": 3,
-      "last_page": 1
-    }
+    ]
   }
 }
 ```

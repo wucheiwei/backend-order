@@ -20,25 +20,17 @@ class StoreController extends Controller
     }
 
     /**
-     * 取得所有 Store（分頁）
+     * 取得所有 Store（不分頁）
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+    public function index()
     {
         try {
-            $perPage = min((int)$request->input('per_page', 10), 10); // 最多 10 筆
-            $stores = $this->storeService->getAll($perPage);
+            $stores = $this->storeService->getAll();
 
             return $this->success([
-                'data' => $stores->items(),
-                'pagination' => [
-                    'current_page' => $stores->currentPage(),
-                    'per_page' => $stores->perPage(),
-                    'total' => $stores->total(),
-                    'last_page' => $stores->lastPage(),
-                ],
+                'data' => $stores,
             ], '取得類別列表成功');
         } catch (\Exception $e) {
             return $this->serverError('取得類別列表失敗：' . $e->getMessage());

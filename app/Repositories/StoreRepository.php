@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\Store;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class StoreRepository
 {
@@ -15,16 +14,15 @@ class StoreRepository
     }
 
     /**
-     * 取得所有 Store（分頁）
+     * 取得所有 Store（不分頁）
      *
-     * @param int $perPage
-     * @return LengthAwarePaginator
+     * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getAll(int $perPage = 10): LengthAwarePaginator
+    public function getAll()
     {
         return $this->model
             ->orderBy('sort', 'asc')
-            ->paginate($perPage);
+            ->get();
     }
 
     /**

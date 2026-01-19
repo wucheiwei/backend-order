@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Repositories\StoreRepository;
 use App\Repositories\ProductRepository;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class StoreService
 {
@@ -18,14 +17,26 @@ class StoreService
     }
 
     /**
-     * 取得所有 Store（分頁）
+     * 取得所有 Store（不分頁）
      *
-     * @param int $perPage
-     * @return LengthAwarePaginator
+     * @return array
      */
-    public function getAll(int $perPage = 10): LengthAwarePaginator
+    public function getAll(): array
     {
-        return $this->storeRepository->getAll($perPage);
+        $stores = $this->storeRepository->getAll();
+        
+        $results = [];
+        foreach ($stores as $store) {
+            $results[] = [
+                'id' => $store->id,
+                'name' => $store->name,
+                'sort' => $store->sort,
+                'created_at' => $store->created_at,
+                'updated_at' => $store->updated_at,
+            ];
+        }
+        
+        return $results;
     }
 
     /**

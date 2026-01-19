@@ -48,7 +48,7 @@ Route::middleware('jwt.auth')->group(function () {
 
     // Store 相關路由
     Route::prefix('stores')->group(function () {
-        Route::get('/', [StoreController::class, 'index']); // 取得所有類別（分頁）
+        Route::get('/', [StoreController::class, 'index']); // 取得所有類別（不分頁）
         Route::get('/{id}', [StoreController::class, 'show']); // 取得單一類別
         Route::post('/', [StoreController::class, 'store']); // 批量創建類別
         Route::put('/', [StoreController::class, 'update']); // 批量更新類別
