@@ -192,6 +192,63 @@ class ProductService
     }
 
     /**
+     * 更新單一 Product
+     *
+     * @param int $id product ID
+     * @param array $data 要更新的資料
+     * @return array
+     * @throws \Exception
+     */
+    public function update(int $id, array $data): array
+    {
+        $product = $this->productRepository->findById($id);
+
+        if (!$product) {
+            throw new \Exception('品項不存在', 404);
+        }
+
+        // 如果更新 store_id，驗證新的 store_id 是否存在
+        if (isset($data['store_id']) && $data['store_id'] != $product->store_id) {
+            $store = \App\Models\Store::find($data['store_id']);
+            if (!$store) {
+                throw new \Exception('類別不存在', 404);
+            }
+        }
+
+        // update 方法會自動從 data 中取出 id（但這裡我們已經有 id 了，所以不需要）
+        $data['id'] = $id;
+        $updated = $this->productRepository->update($data);
+
+        if (!$updated) {
+            throw new \Exception('更新品項失敗', 500);
+        }
+
+        // 重新取得更新後的資料
+        $product->refresh();
+        $product->load('store');
+        $store = $product->store;
+
+        return [
+            'store' => $store ? [
+                'id' => $store->id,
+                'name' => $store->name,
+                'sort' => $store->sort,
+                'created_at' => $store->created_at,
+                'updated_at' => $store->updated_at,
+            ] : null,
+            'product' => [
+                'id' => $product->id,
+                'store_id' => $product->store_id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'sort' => $product->sort,
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+            ],
+        ];
+    }
+
+    /**
      * 批量更新 Product（針對特定 store_id）
      *
      * @param int $storeId 要更新的 store_id

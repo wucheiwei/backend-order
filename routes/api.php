@@ -61,7 +61,8 @@ Route::middleware('jwt.auth')->group(function () {
         Route::get('/by-store/{store_id}', [ProductController::class, 'getByStoreId']); // 根據 store_id 取得所有品項（不包含關聯的 Store）
         Route::get('/{id}', [ProductController::class, 'show']); // 取得單一品項（包含關聯的 Store）
         Route::post('/', [ProductController::class, 'store']); // 批量創建品項
-        Route::put('/', [ProductController::class, 'update']); // 批量更新品項
+        Route::put('/batch', [ProductController::class, 'update']); // 批量更新品項
+        Route::put('/{id}', [ProductController::class, 'updateSingle']); // 更新單一品項
         Route::delete('/{id}', [ProductController::class, 'destroy']); // 刪除品項（軟刪除）
     });
 });

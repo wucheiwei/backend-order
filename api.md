@@ -516,7 +516,73 @@ Authorization: Bearer {your_jwt_token}
 }
 ```
 
-#### Products - 批量更新（PUT /api/products）
+#### PUT /api/products/{id} - 更新單一品項
+
+**請求方式**: `PUT`  
+**認證**: 需要 JWT Token  
+**路徑參數**:
+- `id`: 品項 ID
+
+**請求範例**:
+```
+PUT /api/products/1
+Authorization: Bearer {your_jwt_token}
+Content-Type: application/json
+
+{
+  "name": "可樂（大）",
+  "price": 60,
+  "store_id": 1,
+  "sort": 1
+}
+```
+
+**說明**:
+- 所有欄位都是可選的（`sometimes`），只需要傳入要更新的欄位
+- `store_id` 可以更新（會驗證新的 store_id 是否存在且未軟刪除）
+- `sort` 可以更新
+
+**回應範例**:
+```json
+{
+  "code": 200,
+  "is_success": true,
+  "message": "更新品項成功",
+  "data": {
+    "store": {
+      "id": 1,
+      "name": "飲料類",
+      "sort": 1,
+      "created_at": "2026-01-18T23:36:10.000000Z",
+      "updated_at": "2026-01-18T23:36:10.000000Z"
+    },
+    "product": {
+      "id": 1,
+      "store_id": 1,
+      "name": "可樂（大）",
+      "price": 60,
+      "sort": 1,
+      "created_at": "2026-01-18T23:36:10.000000Z",
+      "updated_at": "2026-01-18T23:36:10.000000Z"
+    }
+  }
+}
+```
+
+**錯誤回應（404）**:
+```json
+{
+  "code": 404,
+  "is_success": false,
+  "message": "品項不存在",
+  "data": []
+}
+```
+
+#### PUT /api/products/batch - 批量更新品項
+
+**請求方式**: `PUT`  
+**認證**: 需要 JWT Token  
 
 **說明（重要）**：
 - **必須傳入 `store_id`**：指定要更新的類別 ID

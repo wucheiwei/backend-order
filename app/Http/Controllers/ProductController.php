@@ -98,6 +98,32 @@ class ProductController extends Controller
     }
 
     /**
+     * 更新單一 Product
+     *
+     * @param int $id
+     * @param \App\Http\Requests\UpdateSingleProductRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateSingle(int $id, \App\Http\Requests\UpdateSingleProductRequest $request)
+    {
+        try {
+            $validated = $request->validated();
+            $data = $this->productService->update($id, $validated);
+
+            return $this->success($data, '更新品項成功');
+        } catch (\Exception $e) {
+            $code = $e->getCode() ?: 500;
+            if ($code === 404) {
+                return $this->notFound($e->getMessage());
+            }
+            if ($code === 422) {
+                return $this->validationError($e->getMessage());
+            }
+            return $this->serverError('更新品項失敗：' . $e->getMessage());
+        }
+    }
+
+    /**
      * 批量更新 Product
      *
      * @param UpdateProductRequest $request
