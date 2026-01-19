@@ -101,7 +101,22 @@ backend-order/
    php artisan migrate
    ```
 
-9. **設定儲存目錄權限**
+9. **（可選）產生測試資料**
+   ```bash
+   php artisan db:seed --class=TestDataSeeder
+   ```
+   
+   或執行所有 Seeders：
+   ```bash
+   php artisan db:seed
+   ```
+   
+   > **測試資料內容**：
+   > - **會員帳號**：`test@123.tw` / 密碼：`12345678`
+   > - **類別**：飲料類、餐點類、甜點類、小食類（共 4 個）
+   > - **品項**：每個類別下有多個品項（共 15 個）
+
+10. **設定儲存目錄權限**
    ```bash
    chmod -R 775 storage bootstrap/cache
    chown -R www-data:www-data storage bootstrap/cache
