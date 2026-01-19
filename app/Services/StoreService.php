@@ -3,15 +3,18 @@
 namespace App\Services;
 
 use App\Repositories\StoreRepository;
+use App\Repositories\ProductRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class StoreService
 {
     protected $storeRepository;
+    protected $productRepository;
 
-    public function __construct(StoreRepository $storeRepository)
+    public function __construct(StoreRepository $storeRepository, ProductRepository $productRepository)
     {
         $this->storeRepository = $storeRepository;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -128,7 +131,7 @@ class StoreService
     }
 
     /**
-     * 刪除 Store（軟刪除）
+     * 刪除 Store（軟刪除），同時軟刪除所有相關的 Products
      *
      * @param int $id
      * @return void
@@ -142,6 +145,13 @@ class StoreService
             throw new \Exception('類別不存在', 404);
         }
 
+        // 先軟刪除所有相關的 products（findByStoreId 已排除軟刪除的記錄）
+        $products = $this->productRepository->findByStoreId($id);
+        foreach ($products as $product) {
+            $this->productRepository->delete($product->id);
+        }
+
+        // 再軟刪除 store
         $deleted = $this->storeRepository->delete($id);
 
         if (!$deleted) {

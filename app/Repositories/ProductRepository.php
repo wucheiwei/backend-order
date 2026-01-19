@@ -40,7 +40,7 @@ class ProductRepository
     }
 
     /**
-     * 根據 Store ID 查詢 Products
+     * 根據 Store ID 查詢 Products（排除軟刪除的記錄）
      *
      * @param int $storeId
      * @return \Illuminate\Database\Eloquent\Collection
@@ -49,6 +49,7 @@ class ProductRepository
     {
         return $this->model
             ->where('store_id', $storeId)
+            ->whereNull('deleted_at') // 排除軟刪除的記錄
             ->orderBy('sort', 'asc')
             ->get();
     }
