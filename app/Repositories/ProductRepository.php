@@ -119,5 +119,22 @@ class ProductRepository
         }
         return $product->delete();
     }
+
+    /**
+     * 取得所有未被軟刪除的 Product IDs（用於批量刪除判斷）
+     *
+     * @param array $excludeIds 要排除的 IDs（傳入的 products）
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAllActiveIdsExcept(array $excludeIds = [])
+    {
+        $query = $this->model->whereNull('deleted_at');
+        
+        if (!empty($excludeIds)) {
+            $query->whereNotIn('id', $excludeIds);
+        }
+        
+        return $query->pluck('id');
+    }
 }
 

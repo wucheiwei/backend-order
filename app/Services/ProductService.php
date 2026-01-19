@@ -167,6 +167,14 @@ class ProductService
     {
         $results = [];
         $maxSortByStore = [];
+        
+        // 收集所有傳入的 product ids（只包含有 id 的，用於後續刪除判斷）
+        $providedIds = [];
+        foreach ($productsData as $item) {
+            if (isset($item['id']) && $item['id'] !== null && $item['id'] !== '') {
+                $providedIds[] = (int)$item['id'];
+            }
+        }
 
         // 先依 store_id 分組（沒有傳 store_id 的更新資料，會在處理時用原本 product.store_id）
         $groups = [];
@@ -257,6 +265,17 @@ class ProductService
                         'updated_at' => $product->updated_at,
                     ],
                 ];
+            }
+        }
+
+        // 找出所有不在傳入陣列中的 products 並軟刪除
+        if (!empty($providedIds)) {
+            // 找出所有不在傳入陣列中的 product ids
+            $idsToDelete = $this->productRepository->getAllActiveIdsExcept($providedIds);
+            
+            // 批量軟刪除
+            foreach ($idsToDelete as $id) {
+                $this->productRepository->delete((int)$id);
             }
         }
 

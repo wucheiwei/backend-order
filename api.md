@@ -364,6 +364,9 @@ Authorization: Bearer {your_jwt_token}
 - 若單筆資料 **有 `id`**：視為更新該 product
 - 若單筆資料 **沒有 `id`**：視為新增 product（此時 `store_id` / `name` / `price` 為必填）
   - `sort` **不需傳入**，後端會依「相同 store_id、且排除軟刪除」的最大 sort + 1 自動遞增
+- **同步刪除規則**：更新完成後，資料庫中「目前存在且未被軟刪除」的 product，若其 `id` **不在本次傳入的 `products`（有帶 `id` 的那些）清單內**，會被後端**軟刪除**
+  - 也就是說：本次 `PUT /api/products` 的 `products`（含更新 + 新增）會被視為「最新的完整清單」
+  - 若本次傳入全部都沒有 `id`（全新增），後端**不會**觸發同步刪除（避免把既有資料全刪掉）
 
 ```json
 {
