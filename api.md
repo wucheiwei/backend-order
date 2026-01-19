@@ -359,6 +359,60 @@ Authorization: Bearer {your_jwt_token}
 }
 ```
 
+#### GET /api/products/by-store/{store_id} - 根據 Store ID 取得所有品項
+
+**請求方式**: `GET`  
+**認證**: 需要 JWT Token  
+**路徑參數**:
+- `store_id`: 類別 ID
+
+**請求範例**:
+```
+GET /api/products/by-store/1
+Authorization: Bearer {your_jwt_token}
+```
+
+**回應範例**:
+```json
+{
+  "code": 200,
+  "is_success": true,
+  "message": "取得品項列表成功",
+  "data": {
+    "products": [
+      {
+        "id": 1,
+        "store_id": 1,
+        "name": "可樂",
+        "price": 50,
+        "sort": 1,
+        "created_at": "2026-01-18T23:36:10.000000Z",
+        "updated_at": "2026-01-18T23:36:10.000000Z"
+      },
+      {
+        "id": 2,
+        "store_id": 1,
+        "name": "雪碧",
+        "price": 50,
+        "sort": 2,
+        "created_at": "2026-01-18T23:36:10.000000Z",
+        "updated_at": "2026-01-18T23:36:10.000000Z"
+      }
+    ]
+  }
+}
+```
+
+**錯誤回應（404）**:
+```json
+{
+  "code": 404,
+  "is_success": false,
+  "message": "類別不存在",
+  "data": []
+}
+```
+
 #### GET /api/products/{id} - 取得單一品項
 
 **請求方式**: `GET`  
@@ -465,21 +519,55 @@ Authorization: Bearer {your_jwt_token}
 #### Products - 批量更新（PUT /api/products）
 
 **說明（重要）**：
-- 後端會先把傳入的 `products` 依 `store_id` 分組，**一批一批**處理
-- 若單筆資料 **有 `id`**：視為更新該 product
-- 若單筆資料 **沒有 `id`**：視為新增 product（此時 `store_id` / `name` / `price` 為必填）
+- **必須傳入 `store_id`**：指定要更新的類別 ID
+- 只能更新**單一類別**下的 products，不能同時更新多個類別
+- 若單筆資料 **有 `id`**：視為更新該 product（必須屬於指定的 `store_id`）
+- 若單筆資料 **沒有 `id`**：視為新增 product（`name` / `price` 為必填，`store_id` 會自動使用外層的）
   - `sort` **不需傳入**，後端會依「相同 store_id、且排除軟刪除」的最大 sort + 1 自動遞增
-- **同步刪除規則**：更新完成後，資料庫中「目前存在且未被軟刪除」的 product，若其 `id` **不在本次傳入的 `products`（有帶 `id` 的那些）清單內**，會被後端**軟刪除**
-  - 也就是說：本次 `PUT /api/products` 的 `products`（含更新 + 新增）會被視為「最新的完整清單」
+- **同步刪除規則**：更新完成後，該 `store_id` 下所有不在傳入陣列中的 products 會被軟刪除
+  - 也就是說：本次 `PUT /api/products` 的 `products`（含更新 + 新增）會被視為該類別的「最新完整清單」
   - 若本次傳入全部都沒有 `id`（全新增），後端**不會**觸發同步刪除（避免把既有資料全刪掉）
 
+**請求格式**:
 ```json
 {
+  "store_id": 1,
   "products": [
     { "id": 1, "name": "可樂（大）", "price": 60 },
-    { "id": 2, "store_id": 2, "name": "薯條", "price": 40 },
-    { "store_id": 2, "name": "雞塊", "price": 55 }
+    { "id": 2, "name": "雪碧（大）", "price": 60 },
+    { "name": "新飲料", "price": 50 }
   ]
+}
+```
+
+**回應範例**:
+```json
+{
+  "code": 200,
+  "is_success": true,
+  "message": "更新品項成功",
+  "data": {
+    "products": [
+      {
+        "store": {
+          "id": 1,
+          "name": "飲料類",
+          "sort": 1,
+          "created_at": "2026-01-18T23:36:10.000000Z",
+          "updated_at": "2026-01-18T23:36:10.000000Z"
+        },
+        "product": {
+          "id": 1,
+          "store_id": 1,
+          "name": "可樂（大）",
+          "price": 60,
+          "sort": 1,
+          "created_at": "2026-01-18T23:36:10.000000Z",
+          "updated_at": "2026-01-18T23:36:10.000000Z"
+        }
+      }
+    ]
+  }
 }
 ```
 

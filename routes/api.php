@@ -58,6 +58,7 @@ Route::middleware('jwt.auth')->group(function () {
     // Product 相關路由
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']); // 取得所有品項（分頁，包含關聯的 Store）
+        Route::get('/by-store/{store_id}', [ProductController::class, 'getByStoreId']); // 根據 store_id 取得所有品項（不包含關聯的 Store）
         Route::get('/{id}', [ProductController::class, 'show']); // 取得單一品項（包含關聯的 Store）
         Route::post('/', [ProductController::class, 'store']); // 批量創建品項
         Route::put('/', [ProductController::class, 'update']); // 批量更新品項

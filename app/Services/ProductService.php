@@ -63,6 +63,41 @@ class ProductService
     }
 
     /**
+     * 根據 Store ID 取得所有 Products（不包含關聯的 Store）
+     *
+     * @param int $storeId
+     * @return array
+     * @throws \Exception
+     */
+    public function getByStoreId(int $storeId): array
+    {
+        // 驗證 store 是否存在
+        $store = \App\Models\Store::find($storeId);
+        if (!$store) {
+            throw new \Exception('類別不存在', 404);
+        }
+
+        $products = $this->productRepository->findByStoreId($storeId);
+        
+        $items = [];
+        foreach ($products as $product) {
+            $items[] = [
+                'id' => $product->id,
+                'store_id' => $product->store_id,
+                'name' => $product->name,
+                'price' => $product->price,
+                'sort' => $product->sort,
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+            ];
+        }
+
+        return [
+            'products' => $items,
+        ];
+    }
+
+    /**
      * 根據 ID 取得 Product（包含關聯的 Store）
      *
      * @param int $id
@@ -157,16 +192,17 @@ class ProductService
     }
 
     /**
-     * 批量更新 Product
+     * 批量更新 Product（針對特定 store_id）
      *
-     * @param array $productsData
+     * @param int $storeId 要更新的 store_id
+     * @param array $productsData products 陣列
      * @return array
      * @throws \Exception
      */
-    public function updateBatch(array $productsData): array
+    public function updateBatch(int $storeId, array $productsData): array
     {
         $results = [];
-        $maxSortByStore = [];
+        $maxSort = $this->productRepository->getMaxSortByStoreId($storeId);
         
         // 收集所有傳入的 product ids（只包含有 id 的，用於後續刪除判斷）
         $providedIds = [];
@@ -176,76 +212,19 @@ class ProductService
             }
         }
 
-        // 先依 store_id 分組（沒有傳 store_id 的更新資料，會在處理時用原本 product.store_id）
-        $groups = [];
+        // 處理每個 product
         foreach ($productsData as $item) {
-            $groupKey = $item['store_id'] ?? '__unknown_store__';
-            $groups[$groupKey][] = $item;
-        }
+            $hasId = isset($item['id']) && $item['id'] !== null && $item['id'] !== '';
 
-        foreach ($groups as $groupStoreId => $items) {
-            foreach ($items as $item) {
-                $hasId = isset($item['id']) && $item['id'] !== null && $item['id'] !== '';
+            // 沒有 id -> 新增 product
+            if (!$hasId) {
+                $maxSort++;
+                $item['store_id'] = $storeId; // 使用傳入的 store_id
+                $item['sort'] = $maxSort; // 自動設定 sort
 
-                // 沒有 id -> 新增 product
-                if (!$hasId) {
-                    $storeId = (int)($item['store_id'] ?? 0);
-                    if ($storeId <= 0) {
-                        // 理論上會被 FormRequest 擋下；這裡保險
-                        throw new \Exception("products 中存在未帶 store_id 的新增資料", 422);
-                    }
-
-                    if (!isset($maxSortByStore[$storeId])) {
-                        $maxSortByStore[$storeId] = $this->productRepository->getMaxSortByStoreId($storeId);
-                    }
-                    $maxSortByStore[$storeId]++;
-                    $item['sort'] = $maxSortByStore[$storeId];
-
-                    $created = $this->productRepository->create($item);
-                    $created->load('store');
-                    $store = $created->store;
-
-                    $results[] = [
-                        'store' => $store ? [
-                            'id' => $store->id,
-                            'name' => $store->name,
-                            'sort' => $store->sort,
-                            'created_at' => $store->created_at,
-                            'updated_at' => $store->updated_at,
-                        ] : null,
-                        'product' => [
-                            'id' => $created->id,
-                            'store_id' => $created->store_id,
-                            'name' => $created->name,
-                            'price' => $created->price,
-                            'sort' => $created->sort,
-                            'created_at' => $created->created_at,
-                            'updated_at' => $created->updated_at,
-                        ],
-                    ];
-
-                    continue;
-                }
-
-                // 有 id -> 更新 product
-                $id = (int)$item['id'];
-                $product = $this->productRepository->findById($id);
-
-                if (!$product) {
-                    throw new \Exception("品項 ID {$id} 不存在", 404);
-                }
-
-                // update 方法會自動從 data 中取出 id
-                $updated = $this->productRepository->update($item);
-
-                if (!$updated) {
-                    throw new \Exception("更新品項 ID {$id} 失敗", 500);
-                }
-
-                // 重新取得更新後的資料
-                $product->refresh();
-                $product->load('store');
-                $store = $product->store;
+                $created = $this->productRepository->create($item);
+                $created->load('store');
+                $store = $created->store;
 
                 $results[] = [
                     'store' => $store ? [
@@ -256,26 +235,74 @@ class ProductService
                         'updated_at' => $store->updated_at,
                     ] : null,
                     'product' => [
-                        'id' => $product->id,
-                        'store_id' => $product->store_id,
-                        'name' => $product->name,
-                        'price' => $product->price,
-                        'sort' => $product->sort,
-                        'created_at' => $product->created_at,
-                        'updated_at' => $product->updated_at,
+                        'id' => $created->id,
+                        'store_id' => $created->store_id,
+                        'name' => $created->name,
+                        'price' => $created->price,
+                        'sort' => $created->sort,
+                        'created_at' => $created->created_at,
+                        'updated_at' => $created->updated_at,
                     ],
                 ];
+
+                continue;
             }
+
+            // 有 id -> 更新 product
+            $id = (int)$item['id'];
+            $product = $this->productRepository->findById($id);
+
+            if (!$product) {
+                throw new \Exception("品項 ID {$id} 不存在", 404);
+            }
+
+            // 驗證 product 是否屬於該 store_id
+            if ($product->store_id != $storeId) {
+                throw new \Exception("品項 ID {$id} 不屬於類別 ID {$storeId}", 422);
+            }
+
+            // update 方法會自動從 data 中取出 id
+            $updated = $this->productRepository->update($item);
+
+            if (!$updated) {
+                throw new \Exception("更新品項 ID {$id} 失敗", 500);
+            }
+
+            // 重新取得更新後的資料
+            $product->refresh();
+            $product->load('store');
+            $store = $product->store;
+
+            $results[] = [
+                'store' => $store ? [
+                    'id' => $store->id,
+                    'name' => $store->name,
+                    'sort' => $store->sort,
+                    'created_at' => $store->created_at,
+                    'updated_at' => $store->updated_at,
+                ] : null,
+                'product' => [
+                    'id' => $product->id,
+                    'store_id' => $product->store_id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'sort' => $product->sort,
+                    'created_at' => $product->created_at,
+                    'updated_at' => $product->updated_at,
+                ],
+            ];
         }
 
-        // 找出所有不在傳入陣列中的 products 並軟刪除
+        // 找出該 store_id 下所有不在傳入陣列中的 products 並軟刪除
         if (!empty($providedIds)) {
-            // 找出所有不在傳入陣列中的 product ids
-            $idsToDelete = $this->productRepository->getAllActiveIdsExcept($providedIds);
+            // 取得該 store_id 下所有現有的 product ids
+            $allProductsInStore = $this->productRepository->findByStoreId($storeId);
             
-            // 批量軟刪除
-            foreach ($idsToDelete as $id) {
-                $this->productRepository->delete((int)$id);
+            foreach ($allProductsInStore as $product) {
+                // 如果 product 的 id 不在傳入的 ids 中，就軟刪除它
+                if (!in_array($product->id, $providedIds)) {
+                    $this->productRepository->delete($product->id);
+                }
             }
         }
 

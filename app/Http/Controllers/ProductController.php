@@ -38,6 +38,27 @@ class ProductController extends Controller
     }
 
     /**
+     * 根據 Store ID 取得所有 Products（不包含關聯的 Store）
+     *
+     * @param int $storeId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getByStoreId(int $storeId)
+    {
+        try {
+            $data = $this->productService->getByStoreId($storeId);
+
+            return $this->success($data, '取得品項列表成功');
+        } catch (\Exception $e) {
+            $code = $e->getCode() ?: 500;
+            if ($code === 404) {
+                return $this->notFound($e->getMessage());
+            }
+            return $this->serverError('取得品項列表失敗：' . $e->getMessage());
+        }
+    }
+
+    /**
      * 取得單一 Product（包含關聯的 Store）
      *
      * @param int $id
@@ -86,13 +107,19 @@ class ProductController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = $this->productService->updateBatch($validated['products']);
+            $storeId = (int)$validated['store_id'];
+            $products = $validated['products'];
+            
+            $data = $this->productService->updateBatch($storeId, $products);
 
             return $this->success($data, '更新品項成功');
         } catch (\Exception $e) {
             $code = $e->getCode() ?: 500;
             if ($code === 404) {
                 return $this->notFound($e->getMessage());
+            }
+            if ($code === 422) {
+                return $this->validationError($e->getMessage());
             }
             return $this->serverError('更新品項失敗：' . $e->getMessage());
         }
